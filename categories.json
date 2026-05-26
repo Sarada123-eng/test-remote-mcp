@@ -1,0 +1,152 @@
+{
+  "food": [
+    "groceries",
+    "fruits",
+    "vegetables",
+    "dining_out",
+    "beverages",
+    "snacks",
+    "meal_delivery",
+    "baking"
+  ],
+  "transportation": [
+    "public_transit",
+    "taxi_rideshare",
+    "fuel",
+    "vehicle_maintenance",
+    "parking",
+    "tolls",
+    "car_rental",
+    "bike_share"
+  ],
+  "utilities": [
+    "electricity",
+    "water",
+    "gas",
+    "internet",
+    "phone",
+    "trash",
+    "heating",
+    "sewer"
+  ],
+  "entertainment": [
+    "movies",
+    "concerts",
+    "streaming_services",
+    "games",
+    "events",
+    "books",
+    "nightlife",
+    "hobbies"
+  ],
+  "health": [
+    "doctor_visits",
+    "prescriptions",
+    "dental",
+    "vision",
+    "therapy",
+    "gym",
+    "medical_supplies",
+    "supplements"
+  ],
+  "education": [
+    "tuition",
+    "books",
+    "online_courses",
+    "workshops",
+    "supplies",
+    "certifications",
+    "tutoring",
+    "conferences"
+  ],
+  "shopping": [
+    "clothing",
+    "electronics",
+    "home_goods",
+    "accessories",
+    "cosmetics",
+    "gifts",
+    "sporting_goods",
+    "office_supplies"
+  ],
+  "finance": [
+    "banking_fees",
+    "investments",
+    "insurance",
+    "taxes",
+    "loans",
+    "savings",
+    "credit_card_payments",
+    "financial_advice"
+  ],
+  "work": [
+    "commute",
+    "software_tools",
+    "subscriptions",
+    "equipment",
+    "conferences",
+    "training",
+    "freelance_fees",
+    "office_supplies"
+  ],
+  "travel": [
+    "flights",
+    "hotels",
+    "car_rental_travel",
+    "travel_insurance",
+    "tours",
+    "meals_on_trip",
+    "visas_passports",
+    "souvenirs"
+  ],
+  "home": [
+    "rent_mortgage",
+    "repairs",
+    "furniture",
+    "landscaping",
+    "cleaning_services",
+    "appliances",
+    "security",
+    "property_taxes"
+  ],
+  "personal_care": [
+    "haircuts",
+    "skincare",
+    "toiletries",
+    "spa",
+    "grooming",
+    "cosmetics",
+    "personal_training",
+    "wellness"
+  ],
+  "pets": [
+    "pet_food",
+    "vet_visits",
+    "grooming_pets",
+    "pet_supplies",
+    "pet_insurance",
+    "boarding",
+    "training_pets",
+    "toys"
+  ],
+  "hobbies": [
+    "photography",
+    "music",
+    "crafting",
+    "gardening",
+    "sports",
+    "collecting",
+    "woodworking",
+    "painting"
+  ],
+  "technology": [
+    "software",
+    "hardware",
+    "subscriptions_tech",
+    "cloud_services",
+    "repairs_tech",
+    "peripherals",
+    "smartphones",
+    "gadgets"
+  ]
+}
