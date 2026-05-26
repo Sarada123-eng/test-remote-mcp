@@ -1,5 +1,7 @@
 import os
-import sqlite3
+import aiosqlite
+import asyncio
+import aiohttp
 from datetime import datetime, timezone
 
 import requests
@@ -70,10 +72,10 @@ def _normalize_attendees(attendees):
             normalized.append({"email": attendee["email"]})
     return normalized
 
-def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
+async def init_db():
+    async with aiosqlite.connect(DB_PATH) as conn:
+        cursor = await conn.cursor()
+        await cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,38 +87,39 @@ def init_db():
             )
             """
         )
-        conn.commit()
-init_db()
+        await conn.commit()
+
+asyncio.run(init_db())
 
 @mcp.tool
-def add_expense(date: str, amount: float, category: str, subcategory: str = "", note: str = "") -> dict:
+async def add_expense(date: str, amount: float, category: str, subcategory: str = "", note: str = "") -> dict:
     """Add an expense record to the database."""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
+        async with aiosqlite.connect(DB_PATH) as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(
                 """
                 INSERT INTO events (date, amount, category, subcategory, note)
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (date, amount, category, subcategory, note),
             )
-            conn.commit()
+            await conn.commit()
             return {"ok": True, "id": cursor.lastrowid}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
 @mcp.tool
-def list_expenses_by_dates(start_date: str, end_date: str) -> dict:
+async def list_expenses_by_dates(start_date: str, end_date: str) -> dict:
     """List all expense records from the database."""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
+        async with aiosqlite.connect(DB_PATH) as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(
                 "SELECT id, date, amount, category, subcategory, note FROM events WHERE date BETWEEN ? AND ?",
                 (start_date, end_date)
             )
-            rows = cursor.fetchall()
+            rows = await cursor.fetchall()
             expenses = [
                 {
                     "id": row[0],
@@ -133,13 +136,13 @@ def list_expenses_by_dates(start_date: str, end_date: str) -> dict:
         return {"ok": False, "error": str(e)}
     
 @mcp.tool
-def delete_expense(expense_id: int) -> dict:
+async def delete_expense(expense_id: int) -> dict:
     """Delete an expense record from the database by ID."""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM events WHERE id = ?", (expense_id,))
-            conn.commit()
+        async with aiosqlite.connect(DB_PATH) as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("DELETE FROM events WHERE id = ?", (expense_id,))
+            await conn.commit()
             if cursor.rowcount == 0:
                 return {"ok": False, "error": f"No expense found with id {expense_id}"}
             return {"ok": True, "deleted_id": expense_id}
@@ -147,13 +150,13 @@ def delete_expense(expense_id: int) -> dict:
         return {"ok": False, "error": str(e)}
 
 @mcp.tool
-def update_expense(expense_id: int, date: str | None = None, amount: float | None = None, category: str | None = None, subcategory: str | None = None, note: str | None = None) -> dict:
+async def update_expense(expense_id: int, date: str | None = None, amount: float | None = None, category: str | None = None, subcategory: str | None = None, note: str | None = None) -> dict:
     """Update an existing expense record in the database by ID."""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM events WHERE id = ?", (expense_id,))
-            if cursor.fetchone() is None:
+        async with aiosqlite.connect(DB_PATH) as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("SELECT id FROM events WHERE id = ?", (expense_id,))
+            if await cursor.fetchone() is None:
                 return {"ok": False, "error": f"No expense found with id {expense_id}"}
 
             fields_to_update = []
@@ -179,24 +182,27 @@ def update_expense(expense_id: int, date: str | None = None, amount: float | Non
 
             values.append(expense_id)
             sql_query = f"UPDATE events SET {', '.join(fields_to_update)} WHERE id = ?"
-            cursor.execute(sql_query, tuple(values))
-            conn.commit()
+            await cursor.execute(sql_query, tuple(values))
+            await conn.commit()
             return {"ok": True, "updated_id": expense_id}
     except Exception as e:
         return {"ok": False, "error": str(e)}
     
 @mcp.resource("expense://categories", mime_type="application/json")
-def categories():
+async def categories():
     """Return the list of expense categories and subcategories."""
     try:
-        with open(CATEGORIES_PATH, "r", encoding="utf-8") as f:
-            categories_data = f.read()
+        async with aiosqlite.connect(CATEGORIES_PATH) as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("SELECT * FROM categories")
+            rows = await cursor.fetchall()
+            categories_data = [dict(row) for row in rows]
             return {"ok": True, "categories": categories_data}
     except Exception as e:
         return {"ok": False, "error": str(e)}
     
 @mcp.tool
-def calculator(first_num: float, second_num: float, operation: str) -> dict:
+async def calculator(first_num: float, second_num: float, operation: str) -> dict:
     """A simple calculator tool that can perform basic arithmetic operations."""
     if operation == "add":
         result = first_num + second_num
@@ -214,17 +220,18 @@ def calculator(first_num: float, second_num: float, operation: str) -> dict:
 
 
 @mcp.tool
-def get_stock_price(symbol: str) -> dict:
+async def get_stock_price(symbol: str) -> dict:
     """
     Fetch latest stock price for a given symbol (e.g. 'AAPL', 'TSLA') using Alpha Vantage with API key in the URL.
     """
     url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey=YIHP08H0B108536X"
-    r = requests.get(url)
-    return r.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
 
 
 @mcp.tool
-def schedule_calendar_event(
+async def schedule_calendar_event(
     summary: str,
     start_time: str,
     end_time: str,
@@ -278,7 +285,7 @@ def schedule_calendar_event(
 
 
 @mcp.tool
-def list_upcoming_calendar_events(
+async def list_upcoming_calendar_events(
     max_results: int = 10,
     calendar_id: str = "primary",
 ) -> dict:
@@ -324,11 +331,11 @@ def list_upcoming_calendar_events(
 
 
 @mcp.tool
-def delete_calendar_event(calendar_event_id: str, calendar_id: str = "primary") -> dict:
+async def delete_calendar_event(calendar_event_id: str, calendar_id: str = "primary") -> dict:
     """Delete a calendar event by event ID."""
     try:
         service = get_google_calendar_service()
-        service.events().delete(calendarId=calendar_id, eventId=calendar_event_id).execute()
+        await service.events().delete(calendarId=calendar_id, eventId=calendar_event_id).execute()
         return {"ok": True, "calendar_id": calendar_id, "event_id": calendar_event_id, "deleted": True}
     except Exception as e:
         return {
@@ -340,7 +347,7 @@ def delete_calendar_event(calendar_event_id: str, calendar_id: str = "primary") 
 
 
 @mcp.tool
-def reschedule_calendar_event(
+async def reschedule_calendar_event(
     calendar_event_id: str,
     calendar_id: str = "primary",
     summary: str | None = None,
@@ -353,7 +360,7 @@ def reschedule_calendar_event(
     """Update an existing calendar event's time, title, description, and attendees."""
     try:
         service = get_google_calendar_service()
-        existing_event = service.events().get(calendarId=calendar_id, eventId=calendar_event_id).execute()
+        existing_event = await service.events().get(calendarId=calendar_id, eventId=calendar_event_id).execute()
 
         if summary is not None:
             existing_event["summary"] = summary
@@ -378,7 +385,7 @@ def reschedule_calendar_event(
                 existing_event.pop("attendees")
 
         updated_event = (
-            service.events()
+            await service.events()
             .update(calendarId=calendar_id, eventId=calendar_event_id, body=existing_event, sendUpdates="none")
             .execute()
         )
