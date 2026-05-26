@@ -1,6 +1,7 @@
 import os
+import json
+import sqlite3
 import aiosqlite
-import asyncio
 import aiohttp
 from datetime import datetime, timezone
 
@@ -72,10 +73,10 @@ def _normalize_attendees(attendees):
             normalized.append({"email": attendee["email"]})
     return normalized
 
-async def init_db():
-    async with aiosqlite.connect(DB_PATH) as conn:
-        cursor = await conn.cursor()
-        await cursor.execute(
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,9 +88,10 @@ async def init_db():
             )
             """
         )
-        await conn.commit()
+        conn.commit()
 
-asyncio.run(init_db())
+
+init_db()
 
 @mcp.tool
 async def add_expense(date: str, amount: float, category: str, subcategory: str = "", note: str = "") -> dict:
@@ -192,12 +194,9 @@ async def update_expense(expense_id: int, date: str | None = None, amount: float
 async def categories():
     """Return the list of expense categories and subcategories."""
     try:
-        async with aiosqlite.connect(CATEGORIES_PATH) as conn:
-            cursor = await conn.cursor()
-            await cursor.execute("SELECT * FROM categories")
-            rows = await cursor.fetchall()
-            categories_data = [dict(row) for row in rows]
-            return {"ok": True, "categories": categories_data}
+        with open(CATEGORIES_PATH, "r", encoding="utf-8") as f:
+            categories_data = json.load(f)
+        return {"ok": True, "categories": categories_data}
     except Exception as e:
         return {"ok": False, "error": str(e)}
     
