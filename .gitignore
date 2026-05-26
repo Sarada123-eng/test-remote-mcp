@@ -6,7 +6,7 @@ dist/
 wheels/
 *.egg-info
 
-credentialss.json
+credentials.json
 token.json
 
 # Virtual environments
