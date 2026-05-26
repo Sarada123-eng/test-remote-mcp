@@ -16,7 +16,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 GOOGLE_CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
 GOOGLE_TOKEN_FILE = os.path.join(BASE_DIR, "token.json")
 GOOGLE_CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
-DB_PATH = os.path.join(os.path.dirname(__file__), "events.db")
+DATA_DIR = "/tmp"
+
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(DATA_DIR, "events.db")
 CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
 
 mcp = FastMCP(name="chatbot-server")
